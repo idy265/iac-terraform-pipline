@@ -1,6 +1,8 @@
 """Seed helpers to populate the database with demo data."""
 
 from .constants import (
+    EQUIP_EN_PANNE,
+    EQUIP_FONCTIONNEL,
     PLATEFORME_BATIMENT,
     PLATEFORME_INFORMATIQUE,
     PRIORITE_HAUTE,
@@ -9,7 +11,7 @@ from .constants import (
     ROLE_TECHNICIEN,
 )
 from .extensions import db
-from .models import Categorie, Emplacement, Role, Site, Utilisateur
+from .models import Categorie, Emplacement, Equipement, Role, Site, Utilisateur
 from .services import create_declaration
 
 
@@ -40,10 +42,36 @@ def seed_demo_data():
     emplacement = Emplacement(site_id=site.id, zone="Bureau 302")
     salle_serveurs = Emplacement(site_id=site.id, zone="Salle des serveurs")
     db.session.add_all([emplacement, salle_serveurs])
+    db.session.flush()
 
     cat_info = Categorie(nom="Réseau", type_plateforme=PLATEFORME_INFORMATIQUE)
     cat_bat = Categorie(nom="Plomberie", type_plateforme=PLATEFORME_BATIMENT)
     db.session.add_all([cat_info, cat_bat])
+
+    pc_302 = Equipement(
+        nom="PC bureau 302",
+        code_barre="PC-000302",
+        numero_serie="SN-DL-4521",
+        type_equipement="PC Portable",
+        emplacement_id=emplacement.id,
+        statut=EQUIP_EN_PANNE,
+    )
+    imprimante = Equipement(
+        nom="Imprimante étage 3",
+        code_barre="IMP-0031",
+        type_equipement="Imprimante",
+        emplacement_id=emplacement.id,
+        statut=EQUIP_FONCTIONNEL,
+    )
+    chaudiere = Equipement(
+        nom="Chaudière principale",
+        code_barre="CHA-0001",
+        type_equipement="Chaudière",
+        emplacement_id=salle_serveurs.id,
+        statut=EQUIP_FONCTIONNEL,
+    )
+    db.session.add_all([pc_302, imprimante, chaudiere])
+    db.session.flush()
 
     demandeur = Utilisateur(
         nom="Dupont", prenom="Jean", email="jean@example.com", role=roles[ROLE_DEMANDEUR]
@@ -71,6 +99,7 @@ def seed_demo_data():
         categorie_id=cat_info.id,
         emplacement_id=emplacement.id,
         priorite=PRIORITE_HAUTE,
+        equipement_id=pc_302.id,
         commit=False,
     )
     db.session.commit()

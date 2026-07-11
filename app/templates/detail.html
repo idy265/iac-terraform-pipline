@@ -21,6 +21,9 @@
   <div class="meta-grid">
     <div><div class="m-lbl">Catégorie</div><div class="m-val">{{ declaration.categorie.nom }} ({{ declaration.categorie.type_plateforme }})</div></div>
     <div><div class="m-lbl">Emplacement</div><div class="m-val">{{ declaration.emplacement.site.nom }} · {{ declaration.emplacement.zone }}</div></div>
+    {% if declaration.equipement %}
+    <div><div class="m-lbl">Équipement</div><div class="m-val">{{ declaration.equipement.nom }}{% if declaration.equipement.type_equipement %} ({{ declaration.equipement.type_equipement }}){% endif %} · {{ declaration.equipement.statut }}</div></div>
+    {% endif %}
     <div><div class="m-lbl">Déclarant</div><div class="m-val">{{ declaration.declarant.prenom }} {{ declaration.declarant.nom }}</div></div>
     <div><div class="m-lbl">Technicien</div><div class="m-val">{% if declaration.technicien %}{{ declaration.technicien.prenom }} {{ declaration.technicien.nom }}{% else %}—{% endif %}</div></div>
     <div><div class="m-lbl">Créée le</div><div class="m-val">{{ declaration.date_creation.strftime('%d/%m/%Y %H:%M') }}</div></div>

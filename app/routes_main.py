@@ -14,14 +14,17 @@ from flask import (
 from .auth_helpers import login_required
 from .constants import PRIORITES
 from .extensions import db
-from .models import Categorie, Declaration, Emplacement
+from .models import Alerte, Categorie, Declaration, Emplacement, Equipement
 from .services import (
     ServiceError,
     ajouter_commentaire,
+    alertes_pour,
     can_view_declaration,
     commentaires_visibles,
     create_declaration,
     declarations_visibles,
+    marquer_alerte_lue,
+    marquer_toutes_alertes_lues,
     prendre_en_charge,
     rejeter,
     resoudre,
@@ -49,6 +52,7 @@ def create():
                 categorie_id=request.form.get("categorie_id", type=int),
                 emplacement_id=request.form.get("emplacement_id", type=int),
                 priorite=request.form.get("priorite", ""),
+                equipement_id=request.form.get("equipement_id", type=int),
             )
         except ServiceError as exc:
             flash(str(exc), "danger")
@@ -59,6 +63,7 @@ def create():
         "create.html",
         categories=Categorie.query.all(),
         emplacements=Emplacement.query.all(),
+        equipements=Equipement.query.order_by(Equipement.nom).all(),
         priorites=PRIORITES,
     )
 
@@ -123,3 +128,28 @@ def resoudre_view(declaration_id):
     else:
         flash("Déclaration clôturée.", "success")
     return redirect(url_for("main.detail", declaration_id=declaration_id))
+
+
+@bp.route("/alertes")
+@login_required
+def alertes():
+    return render_template("alertes.html", alertes=alertes_pour(g.user))
+
+
+@bp.route("/alertes/lire", methods=["POST"])
+@login_required
+def alertes_tout_lire():
+    marquer_toutes_alertes_lues(g.user)
+    flash("Alertes marquées comme lues.", "success")
+    return redirect(url_for("main.alertes"))
+
+
+@bp.route("/alertes/<int:alerte_id>")
+@login_required
+def alerte_ouvrir(alerte_id):
+    alerte = db.session.get(Alerte, alerte_id) or abort(404)
+    try:
+        marquer_alerte_lue(alerte, g.user)
+    except ServiceError:
+        abort(403)
+    return redirect(url_for("main.detail", declaration_id=alerte.declaration_id))

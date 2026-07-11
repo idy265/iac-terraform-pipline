@@ -23,6 +23,10 @@
       <a href="{{ url_for('main.create') }}" class="{{ 'active' if request.endpoint == 'main.create' }}">
         <span class="ic">＋</span><span>Nouvelle déclaration</span>
       </a>
+      <a href="{{ url_for('main.alertes') }}" class="{{ 'active' if request.endpoint == 'main.alertes' }}">
+        <span class="ic">🔔</span><span>Alertes</span>
+        {% if nb_alertes_non_lues %}<span class="nav-badge">{{ nb_alertes_non_lues }}</span>{% endif %}
+      </a>
     </nav>
     <div class="sidebar-foot">
       <div class="user-chip">

@@ -103,3 +103,66 @@ def test_comment_route(client, fixtures):
         follow_redirects=True,
     )
     assert "Un souci de plus".encode() in resp.data
+
+
+def test_alertes_page_lists_new_declaration(client, fixtures):
+    _make_decl(fixtures, declarant_key="demandeur", categorie_key="cat_info")
+    _login(client, "alice@example.com")  # tech_info gets an alert
+    resp = client.get("/alertes")
+    assert resp.status_code == 200
+    assert "Nouvelle déclaration".encode() in resp.data
+
+
+def test_alerte_ouvrir_redirects_to_declaration_and_marks_read(client, fixtures):
+    from app.services import alertes_pour, compter_alertes_non_lues
+
+    decl = _make_decl(fixtures, categorie_key="cat_info")
+    alerte = alertes_pour(fixtures["tech_info"])[0]
+    _login(client, "alice@example.com")
+    resp = client.get(f"/alertes/{alerte.id}", follow_redirects=False)
+    assert resp.status_code == 302
+    assert f"/declarations/{decl.id}" in resp.headers["Location"]
+    assert compter_alertes_non_lues(fixtures["tech_info"]) == 0
+
+
+def test_alerte_ouvrir_forbidden_for_other_user(client, fixtures):
+    from app.services import alertes_pour
+
+    _make_decl(fixtures, categorie_key="cat_info")
+    alerte = alertes_pour(fixtures["tech_info"])[0]
+    _login(client, "bob@example.com")  # tech_bat, not the recipient
+    assert client.get(f"/alertes/{alerte.id}").status_code == 403
+
+
+def test_alertes_tout_lire_route(client, fixtures):
+    from app.services import compter_alertes_non_lues
+
+    _make_decl(fixtures, categorie_key="cat_info")
+    _login(client, "alice@example.com")
+    resp = client.post("/alertes/lire", follow_redirects=True)
+    assert resp.status_code == 200
+    assert compter_alertes_non_lues(fixtures["tech_info"]) == 0
+
+
+def test_create_declaration_with_equipement_via_form(client, fixtures):
+    from app.extensions import db
+    from app.models import Equipement
+
+    eq = Equipement(nom="Serveur A", emplacement_id=fixtures["emplacement"].id)
+    db.session.add(eq)
+    db.session.commit()
+    _login(client, "jean@example.com")
+    resp = client.post(
+        "/declarations/new",
+        data={
+            "titre": "Serveur down",
+            "description": "",
+            "categorie_id": fixtures["cat_info"].id,
+            "emplacement_id": fixtures["emplacement"].id,
+            "priorite": PRIORITE_HAUTE,
+            "equipement_id": eq.id,
+        },
+        follow_redirects=True,
+    )
+    assert resp.status_code == 200
+    assert "Serveur A".encode() in resp.data

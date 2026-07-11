@@ -30,6 +30,14 @@
       </div>
     </div>
 
+    <label for="equipement_id">Équipement concerné (optionnel)</label>
+    <select id="equipement_id" name="equipement_id">
+      <option value="">— Aucun équipement —</option>
+      {% for eq in equipements %}
+      <option value="{{ eq.id }}">{{ eq.nom }}{% if eq.type_equipement %} — {{ eq.type_equipement }}{% endif %}{% if eq.code_barre %} ({{ eq.code_barre }}){% endif %}</option>
+      {% endfor %}
+    </select>
+
     <label for="priorite">Priorité</label>
     <select id="priorite" name="priorite">
       {% for p in priorites %}

@@ -8,7 +8,10 @@ independently of the HTTP layer.
 from datetime import datetime
 
 from .constants import (
+    ALERTE_NOUVEAU_COMMENTAIRE,
+    ALERTE_NOUVELLE_DECLARATION,
     ROLE_ADMIN,
+    ROLE_TECHNICIEN,
     STATUT_EN_ATTENTE,
     STATUT_EN_COURS,
     STATUT_REJETE,
@@ -17,12 +20,15 @@ from .constants import (
 )
 from .extensions import db
 from .models import (
+    Alerte,
     Categorie,
     Commentaire,
     Declaration,
     Emplacement,
+    Equipement,
     HistoriqueStatut,
     PieceJointe,
+    Role,
     Utilisateur,
 )
 
@@ -105,13 +111,15 @@ def create_declaration(
     categorie_id,
     emplacement_id,
     priorite,
+    equipement_id=None,
     commit=True,
 ):
     """Create a new declaration.
 
     Rule 5: the status is always "En attente" at creation.
     Rule 6: a declaration must be linked to a site, a precise location and a
-    category (the location carries the site).
+    category (the location carries the site). An equipment may optionally be
+    attached to point at the faulty asset.
     """
     if declarant is None:
         raise PermissionError_("Un utilisateur authentifié est requis.")
@@ -126,6 +134,12 @@ def create_declaration(
     if emplacement is None:
         raise ValidationError("L'emplacement est obligatoire et doit exister.")
 
+    equipement = None
+    if equipement_id:
+        equipement = db.session.get(Equipement, equipement_id)
+        if equipement is None:
+            raise ValidationError("L'équipement sélectionné est introuvable.")
+
     declaration = Declaration(
         titre=titre.strip(),
         description=description,
@@ -134,10 +148,19 @@ def create_declaration(
         declarant_id=declarant.id,
         categorie_id=categorie.id,
         emplacement_id=emplacement.id,
+        equipement_id=equipement.id if equipement else None,
     )
     db.session.add(declaration)
     db.session.flush()
     _record_history(declaration, None, STATUT_EN_ATTENTE, declarant)
+    _creer_alertes(
+        declaration,
+        auteur=declarant,
+        type_alerte=ALERTE_NOUVELLE_DECLARATION,
+        message=f"Nouvelle déclaration « {declaration.titre} » de "
+        f"{declarant.prenom or ''} {declarant.nom}".strip(),
+        inclure_declarant=False,
+    )
     if commit:
         db.session.commit()
     return declaration
@@ -228,7 +251,17 @@ def ajouter_commentaire(declaration, auteur, message, est_interne=False, commit=
         est_interne=est_interne,
     )
     db.session.add(commentaire)
+    # ``commit=False`` is the internal cloture path; the status change is the
+    # meaningful event there, so we only raise an alert for genuine messages.
     if commit:
+        _creer_alertes(
+            declaration,
+            auteur=auteur,
+            type_alerte=ALERTE_NOUVEAU_COMMENTAIRE,
+            message=f"Nouveau message sur « {declaration.titre} » de "
+            f"{auteur.prenom or ''} {auteur.nom}".strip(),
+            inclure_declarant=not est_interne,
+        )
         db.session.commit()
     return commentaire
 
@@ -316,6 +349,95 @@ def anonymiser_utilisateur(user, commit=True):
     if commit:
         db.session.commit()
     return user
+
+
+# ---------------------------------------------------------------------------
+# Alerts / notifications
+# ---------------------------------------------------------------------------
+def _destinataires_alerte(declaration, auteur, inclure_declarant):
+    """Recipients of an alert for ``declaration`` (author excluded).
+
+    Always the technicians matching the declaration's platform plus every
+    administrator (and the assigned technician). The requester is included
+    only for public activity so internal notes stay hidden from them.
+    """
+    recipients = {}
+    type_plateforme = declaration.categorie.type_plateforme if declaration.categorie else None
+    techniciens = (
+        Utilisateur.query.join(Role, Utilisateur.role_id == Role.id)
+        .filter(Role.nom == ROLE_TECHNICIEN, Utilisateur.specialite == type_plateforme)
+        .all()
+    )
+    admins = (
+        Utilisateur.query.join(Role, Utilisateur.role_id == Role.id)
+        .filter(Role.nom == ROLE_ADMIN)
+        .all()
+    )
+    for u in list(techniciens) + list(admins):
+        recipients[u.id] = u
+    if declaration.technicien is not None:
+        recipients[declaration.technicien.id] = declaration.technicien
+    if inclure_declarant and declaration.declarant is not None:
+        recipients[declaration.declarant.id] = declaration.declarant
+    if auteur is not None:
+        recipients.pop(auteur.id, None)
+    return list(recipients.values())
+
+
+def _creer_alertes(declaration, auteur, type_alerte, message, inclure_declarant):
+    """Create one unread alert per recipient. Never raises on its own."""
+    for destinataire in _destinataires_alerte(declaration, auteur, inclure_declarant):
+        db.session.add(
+            Alerte(
+                destinataire_id=destinataire.id,
+                declaration_id=declaration.id,
+                type_alerte=type_alerte,
+                message=message[:255],
+            )
+        )
+
+
+def alertes_pour(user, seulement_non_lues=False):
+    """Return alerts addressed to ``user``, most recent first."""
+    if user is None:
+        return []
+    query = Alerte.query.filter(Alerte.destinataire_id == user.id)
+    if seulement_non_lues:
+        query = query.filter(Alerte.lu.is_(False))
+    return query.order_by(Alerte.date_creation.desc()).all()
+
+
+def compter_alertes_non_lues(user):
+    """Number of unread alerts for ``user`` (0 when anonymous)."""
+    if user is None:
+        return 0
+    return Alerte.query.filter(
+        Alerte.destinataire_id == user.id, Alerte.lu.is_(False)
+    ).count()
+
+
+def marquer_alerte_lue(alerte, user, commit=True):
+    """Mark a single alert as read (only its own recipient may do so)."""
+    if alerte is None:
+        raise ValidationError("Alerte introuvable.")
+    if user is None or alerte.destinataire_id != user.id:
+        raise PermissionError_("Cette alerte ne vous est pas destinée.")
+    alerte.lu = True
+    if commit:
+        db.session.commit()
+    return alerte
+
+
+def marquer_toutes_alertes_lues(user, commit=True):
+    """Mark every alert of ``user`` as read; return how many were updated."""
+    if user is None:
+        return 0
+    n = Alerte.query.filter(
+        Alerte.destinataire_id == user.id, Alerte.lu.is_(False)
+    ).update({Alerte.lu: True}, synchronize_session=False)
+    if commit:
+        db.session.commit()
+    return n
 
 
 # ---------------------------------------------------------------------------

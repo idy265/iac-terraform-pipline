@@ -10,6 +10,7 @@ from datetime import datetime
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from .constants import (
+    EQUIP_FONCTIONNEL,
     PRIORITE_MOYENNE,
     ROLE_DEMANDEUR,
     STATUT_EN_ATTENTE,
@@ -65,9 +66,36 @@ class Emplacement(db.Model):
     zone = db.Column(db.String(120), nullable=False)
 
     site = db.relationship("Site", back_populates="emplacements")
+    equipements = db.relationship(
+        "Equipement",
+        back_populates="emplacement",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
 
     def __repr__(self):
         return f"<Emplacement {self.zone}>"
+
+
+class Equipement(db.Model):
+    """A tracked asset (PC, printer, elevator, boiler, ...) that can break."""
+
+    __tablename__ = "equipements"
+
+    id = db.Column(db.Integer, primary_key=True)
+    nom = db.Column(db.String(150), nullable=False)
+    code_barre = db.Column(db.String(80))
+    numero_serie = db.Column(db.String(120))
+    type_equipement = db.Column(db.String(80))
+    emplacement_id = db.Column(
+        db.Integer, db.ForeignKey("emplacements.id", ondelete="CASCADE")
+    )
+    statut = db.Column(db.String(40), nullable=False, default=EQUIP_FONCTIONNEL)
+
+    emplacement = db.relationship("Emplacement", back_populates="equipements")
+
+    def __repr__(self):
+        return f"<Equipement {self.nom} [{self.statut}]>"
 
 
 class Categorie(db.Model):
@@ -159,11 +187,14 @@ class Declaration(db.Model):
     emplacement_id = db.Column(
         db.Integer, db.ForeignKey("emplacements.id"), nullable=False
     )
+    # Optional link to the faulty asset from the equipment park.
+    equipement_id = db.Column(db.Integer, db.ForeignKey("equipements.id"))
 
     declarant = db.relationship("Utilisateur", foreign_keys=[declarant_id])
     technicien = db.relationship("Utilisateur", foreign_keys=[technicien_id])
     categorie = db.relationship("Categorie")
     emplacement = db.relationship("Emplacement")
+    equipement = db.relationship("Equipement")
 
     commentaires = db.relationship(
         "Commentaire", back_populates="declaration", cascade="all, delete-orphan"
@@ -173,6 +204,9 @@ class Declaration(db.Model):
     )
     historique = db.relationship(
         "HistoriqueStatut", back_populates="declaration", cascade="all, delete-orphan"
+    )
+    alertes = db.relationship(
+        "Alerte", back_populates="declaration", cascade="all, delete-orphan"
     )
 
     def __repr__(self):
@@ -241,3 +275,31 @@ class HistoriqueStatut(db.Model):
 
     def __repr__(self):
         return f"<HistoriqueStatut decl={self.declaration_id} {self.nouveau_statut}>"
+
+
+class Alerte(db.Model):
+    """A notification signalling activity on a declaration to a recipient.
+
+    Created when a requester files a declaration or posts a message, so the
+    relevant technician (or admin) is warned and can review it.
+    """
+
+    __tablename__ = "alertes"
+
+    id = db.Column(db.Integer, primary_key=True)
+    destinataire_id = db.Column(
+        db.Integer, db.ForeignKey("utilisateurs.id"), nullable=False
+    )
+    declaration_id = db.Column(
+        db.Integer, db.ForeignKey("declarations.id"), nullable=False
+    )
+    type_alerte = db.Column(db.String(40), nullable=False)
+    message = db.Column(db.String(255), nullable=False)
+    lu = db.Column(db.Boolean, nullable=False, default=False)
+    date_creation = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+    destinataire = db.relationship("Utilisateur")
+    declaration = db.relationship("Declaration", back_populates="alertes")
+
+    def __repr__(self):
+        return f"<Alerte {self.type_alerte} -> user={self.destinataire_id} lu={self.lu}>"

@@ -68,6 +68,24 @@ a:hover { text-decoration: underline; }
 .nav a .ic { width: 18px; text-align: center; opacity: .9; }
 .nav a:hover { background: rgba(255,255,255,.06); color: #fff; }
 .nav a.active { background: var(--primary); color: #fff; }
+.nav-badge {
+  margin-left: auto; min-width: 20px; height: 20px; padding: 0 6px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--danger); color: #fff; border-radius: 999px;
+  font-size: .72rem; font-weight: 700;
+}
+
+/* ---------- Alerts ---------- */
+.alert-list { list-style: none; margin: 0; padding: 0; }
+.alert-item { border-bottom: 1px solid var(--border); }
+.alert-item:last-child { border-bottom: 0; }
+.alert-item a { display: flex; align-items: center; gap: 12px; padding: 14px 4px; text-decoration: none; color: var(--text); }
+.alert-item a:hover { background: var(--surface-2); }
+.alert-item .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--border); flex-shrink: 0; }
+.alert-item.unread .dot { background: var(--danger); }
+.alert-item.unread .msg { font-weight: 600; }
+.alert-item .body { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+.alert-item .time { font-size: .78rem; color: var(--text-muted); }
 
 .sidebar-foot { margin-top: auto; border-top: 1px solid rgba(255,255,255,.08); padding-top: 14px; }
 .user-chip { display: flex; align-items: center; gap: 10px; padding: 6px 8px; }

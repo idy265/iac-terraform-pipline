@@ -49,8 +49,13 @@ def initials(user):
 def register_ui_helpers(app):
     @app.context_processor
     def _inject():
+        from flask import g
+
+        from .services import compter_alertes_non_lues
+
         return {
             "statut_class": statut_class,
             "priorite_class": priorite_class,
             "initials": initials,
+            "nb_alertes_non_lues": compter_alertes_non_lues(getattr(g, "user", None)),
         }

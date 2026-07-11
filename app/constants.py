@@ -38,3 +38,15 @@ PLATEFORME_INFORMATIQUE = "Informatique"
 PLATEFORME_BATIMENT = "Bâtiment"
 
 PLATEFORMES = (PLATEFORME_INFORMATIQUE, PLATEFORME_BATIMENT)
+
+# Equipment (parc matériel) statuses
+EQUIP_FONCTIONNEL = "Fonctionnel"
+EQUIP_EN_PANNE = "En panne"
+EQUIP_EN_MAINTENANCE = "En maintenance"
+
+EQUIP_STATUTS = (EQUIP_FONCTIONNEL, EQUIP_EN_PANNE, EQUIP_EN_MAINTENANCE)
+
+# Alert / notification types
+ALERTE_NOUVELLE_DECLARATION = "nouvelle_declaration"
+ALERTE_NOUVEAU_COMMENTAIRE = "nouveau_commentaire"
+ALERTE_STATUT = "changement_statut"

@@ -19,6 +19,16 @@ CREATE TABLE emplacements (
     zone     VARCHAR(120) NOT NULL
 );
 
+CREATE TABLE equipements (
+    id             INTEGER PRIMARY KEY,
+    nom            VARCHAR(150) NOT NULL,
+    code_barre     VARCHAR(80),
+    numero_serie   VARCHAR(120),
+    type_equipement VARCHAR(80),                    -- PC Portable, Imprimante, Ascenseur, Chaudière...
+    emplacement_id INTEGER REFERENCES emplacements(id) ON DELETE CASCADE,
+    statut         VARCHAR(40) NOT NULL DEFAULT 'Fonctionnel' -- Fonctionnel / En panne / En maintenance
+);
+
 CREATE TABLE categories (
     id              INTEGER PRIMARY KEY,
     nom             VARCHAR(120) NOT NULL,
@@ -49,7 +59,8 @@ CREATE TABLE declarations (
     declarant_id   INTEGER NOT NULL REFERENCES utilisateurs(id), -- Règle 13 (pas de cascade)
     technicien_id  INTEGER REFERENCES utilisateurs(id),       -- Règle 7
     categorie_id   INTEGER NOT NULL REFERENCES categories(id), -- Règle 6
-    emplacement_id INTEGER NOT NULL REFERENCES emplacements(id) -- Règle 6
+    emplacement_id INTEGER NOT NULL REFERENCES emplacements(id), -- Règle 6
+    equipement_id  INTEGER REFERENCES equipements(id)          -- équipement concerné (optionnel)
 );
 
 CREATE TABLE commentaires (
@@ -76,4 +87,14 @@ CREATE TABLE historique_statuts (
     nouveau_statut      VARCHAR(40) NOT NULL,
     modifie_par_user_id INTEGER REFERENCES utilisateurs(id),
     date_changement     DATETIME NOT NULL
+);
+
+CREATE TABLE alertes (
+    id              INTEGER PRIMARY KEY,
+    destinataire_id INTEGER NOT NULL REFERENCES utilisateurs(id), -- technicien / admin / déclarant averti
+    declaration_id  INTEGER NOT NULL REFERENCES declarations(id),
+    type_alerte     VARCHAR(40) NOT NULL,                         -- nouvelle_declaration / nouveau_commentaire
+    message         VARCHAR(255) NOT NULL,
+    lu              BOOLEAN NOT NULL DEFAULT 0,
+    date_creation   DATETIME NOT NULL
 );

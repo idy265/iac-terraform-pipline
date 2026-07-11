@@ -12,6 +12,15 @@ Outil de déclaration des incidents / demandes de travaux et de leur suivi
   → `Résolu` / `Rejeté`.
 - Commentaires (avec notes internes réservées aux techniciens), pièces jointes
   et historique des changements de statut (SLA).
+- **Parc d'équipements** (`equipements`) : PC, imprimantes, ascenseurs,
+  chaudières… avec code-barres, n° de série, type et statut
+  (*Fonctionnel* / *En panne* / *En maintenance*). Une déclaration peut être
+  rattachée à l'équipement concerné.
+- **Alertes / notifications** : lorsqu'un demandeur crée une déclaration ou
+  poste un message, une alerte est générée pour le(s) technicien(s) de la
+  spécialité concernée et les administrateurs (compteur non-lues dans la
+  barre latérale + page **Alertes**). Les notes internes n'alertent pas le
+  demandeur.
 - Règles métier 1 à 14 de la spécification implémentées dans
   [`app/services.py`](app/services.py) et couvertes par des tests unitaires.
 
@@ -19,8 +28,9 @@ Outil de déclaration des incidents / demandes de travaux et de leur suivi
 
 Voir [`schema.sql`](schema.sql) pour le schéma relationnel documenté et
 [`app/models.py`](app/models.py) pour les modèles SQLAlchemy :
-`roles`, `utilisateurs`, `sites`, `emplacements`, `categories`, `declarations`,
-`commentaires`, `pieces_jointes`, `historique_statuts`.
+`roles`, `utilisateurs`, `sites`, `emplacements`, `equipements`, `categories`,
+`declarations`, `commentaires`, `pieces_jointes`, `historique_statuts`,
+`alertes`.
 
 ## Installation
 
