@@ -4,9 +4,9 @@
 <div class="auth-wrap">
   <div class="auth-card">
     <div class="auth-brand">
-      <span class="logo">◆</span>
+      <span class="logo"><img src="{{ url_for('static', filename='logo.jpg') }}" alt="SICAPSA"></span>
     </div>
-    <h1>GestInc</h1>
+    <h1>SICAPSA</h1>
     <p class="lead">Plateforme de gestion des incidents &amp; demandes de travaux</p>
 
     {% with messages = get_flashed_messages(with_categories=true) %}

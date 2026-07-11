@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}Gestion des Incidents{% endblock %} · GestInc</title>
+  <title>{% block title %}Gestion des Incidents{% endblock %} · SICAPSA</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
@@ -13,8 +13,8 @@
 <div class="app">
   <aside class="sidebar">
     <div class="brand">
-      <span class="logo">◆</span>
-      <span>GestInc<small>Incidents &amp; Travaux</small></span>
+      <span class="logo"><img src="{{ url_for('static', filename='logo.jpg') }}" alt="SICAPSA"></span>
+      <span>SICAPSA<small>Incidents &amp; Travaux</small></span>
     </div>
     <nav class="nav">
       <a href="{{ url_for('main.dashboard') }}" class="{{ 'active' if request.endpoint == 'main.dashboard' }}">
