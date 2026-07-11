@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Nouvelle déclaration{% endblock %}
+{% block content %}
+<div class="card">
+  <h2>Nouvelle déclaration</h2>
+  <form method="post">
+    <label for="titre">Titre</label>
+    <input type="text" id="titre" name="titre" required>
+    <label for="description">Description</label>
+    <textarea id="description" name="description" rows="4"></textarea>
+    <label for="categorie_id">Catégorie</label>
+    <select id="categorie_id" name="categorie_id" required>
+      {% for c in categories %}
+      <option value="{{ c.id }}">{{ c.nom }} ({{ c.type_plateforme }})</option>
+      {% endfor %}
+    </select>
+    <label for="emplacement_id">Emplacement</label>
+    <select id="emplacement_id" name="emplacement_id" required>
+      {% for e in emplacements %}
+      <option value="{{ e.id }}">{{ e.site.nom }} - {{ e.zone }}</option>
+      {% endfor %}
+    </select>
+    <label for="priorite">Priorité</label>
+    <select id="priorite" name="priorite">
+      {% for p in priorites %}
+      <option value="{{ p }}">{{ p }}</option>
+      {% endfor %}
+    </select>
+    <p><button type="submit">Créer</button></p>
+  </form>
+</div>
+{% endblock %}

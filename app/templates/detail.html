@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Déclaration #{{ declaration.id }}{% endblock %}
+{% block content %}
+<div class="card">
+  <h2>{{ declaration.titre }} <span class="badge">{{ declaration.statut }}</span></h2>
+  <p>{{ declaration.description }}</p>
+  <p>
+    <strong>Priorité :</strong> {{ declaration.priorite }} |
+    <strong>Catégorie :</strong> {{ declaration.categorie.nom }} ({{ declaration.categorie.type_plateforme }}) |
+    <strong>Emplacement :</strong> {{ declaration.emplacement.site.nom }} - {{ declaration.emplacement.zone }}
+  </p>
+  <p>
+    <strong>Créée le :</strong> {{ declaration.date_creation.strftime('%Y-%m-%d %H:%M') }}
+    {% if declaration.date_resolution %}
+      | <strong>Résolue le :</strong> {{ declaration.date_resolution.strftime('%Y-%m-%d %H:%M') }}
+    {% endif %}
+  </p>
+
+  {% if g.user.is_technicien or g.user.is_admin %}
+    {% if declaration.statut == 'En attente' %}
+    <form method="post" action="{{ url_for('main.prendre', declaration_id=declaration.id) }}">
+      <button type="submit">Prendre en charge</button>
+    </form>
+    {% endif %}
+    {% if declaration.statut not in ['Résolu', 'Rejeté', 'Clôturé'] %}
+    <form method="post" action="{{ url_for('main.resoudre_view', declaration_id=declaration.id) }}">
+      <label for="commentaire_final">Commentaire final</label>
+      <textarea id="commentaire_final" name="commentaire_final" rows="2" required></textarea>
+      <p>
+        <button type="submit" name="action" value="resoudre">Résoudre</button>
+        <button type="submit" name="action" value="rejeter">Rejeter</button>
+      </p>
+    </form>
+    {% endif %}
+  {% endif %}
+</div>
+
+<div class="card">
+  <h3>Commentaires</h3>
+  {% for c in commentaires %}
+  <p>
+    <strong>{{ c.auteur.prenom }} {{ c.auteur.nom }}</strong>
+    {% if c.est_interne %}<span class="badge">interne</span>{% endif %}
+    <br>{{ c.message }}
+    <br><small>{{ c.date_publication.strftime('%Y-%m-%d %H:%M') }}</small>
+  </p>
+  {% else %}
+  <p>Aucun commentaire.</p>
+  {% endfor %}
+
+  {% if declaration.statut not in ['Résolu', 'Rejeté', 'Clôturé'] %}
+  <form method="post" action="{{ url_for('main.comment', declaration_id=declaration.id) }}">
+    <label for="message">Ajouter un commentaire</label>
+    <textarea id="message" name="message" rows="2" required></textarea>
+    {% if g.user.is_technicien or g.user.is_admin %}
+    <label><input type="checkbox" name="est_interne"> Note interne (invisible au déclarant)</label>
+    {% endif %}
+    <p><button type="submit">Envoyer</button></p>
+  </form>
+  {% endif %}
+</div>
+{% endblock %}

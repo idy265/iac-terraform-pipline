@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Tableau de bord{% endblock %}
+{% block content %}
+<div class="card">
+  <h2>Déclarations</h2>
+  {% if declarations %}
+  <table>
+    <thead>
+      <tr><th>#</th><th>Titre</th><th>Statut</th><th>Priorité</th><th>Catégorie</th><th>Emplacement</th></tr>
+    </thead>
+    <tbody>
+      {% for d in declarations %}
+      <tr>
+        <td>{{ d.id }}</td>
+        <td><a href="{{ url_for('main.detail', declaration_id=d.id) }}">{{ d.titre }}</a></td>
+        <td><span class="badge">{{ d.statut }}</span></td>
+        <td>{{ d.priorite }}</td>
+        <td>{{ d.categorie.nom }} ({{ d.categorie.type_plateforme }})</td>
+        <td>{{ d.emplacement.site.nom }} - {{ d.emplacement.zone }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p>Aucune déclaration à afficher.</p>
+  {% endif %}
+</div>
+{% endblock %}
