@@ -1,32 +1,46 @@
 {% extends "base.html" %}
 {% block title %}Nouvelle déclaration{% endblock %}
+{% block subheading %}Déclarer un incident ou une demande de travaux{% endblock %}
 {% block content %}
-<div class="card">
-  <h2>Nouvelle déclaration</h2>
+<div class="card" style="max-width:680px">
+  <div class="card-title"><h2>Nouvelle déclaration</h2></div>
   <form method="post">
     <label for="titre">Titre</label>
-    <input type="text" id="titre" name="titre" required>
+    <input type="text" id="titre" name="titre" placeholder="Ex : PC ne s'allume plus" required autofocus>
+
     <label for="description">Description</label>
-    <textarea id="description" name="description" rows="4"></textarea>
-    <label for="categorie_id">Catégorie</label>
-    <select id="categorie_id" name="categorie_id" required>
-      {% for c in categories %}
-      <option value="{{ c.id }}">{{ c.nom }} ({{ c.type_plateforme }})</option>
-      {% endfor %}
-    </select>
-    <label for="emplacement_id">Emplacement</label>
-    <select id="emplacement_id" name="emplacement_id" required>
-      {% for e in emplacements %}
-      <option value="{{ e.id }}">{{ e.site.nom }} - {{ e.zone }}</option>
-      {% endfor %}
-    </select>
+    <textarea id="description" name="description" rows="4" placeholder="Décrivez le problème…"></textarea>
+
+    <div class="field-row">
+      <div>
+        <label for="categorie_id">Catégorie</label>
+        <select id="categorie_id" name="categorie_id" required>
+          {% for c in categories %}
+          <option value="{{ c.id }}">{{ c.nom }} — {{ c.type_plateforme }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label for="emplacement_id">Emplacement</label>
+        <select id="emplacement_id" name="emplacement_id" required>
+          {% for e in emplacements %}
+          <option value="{{ e.id }}">{{ e.site.nom }} — {{ e.zone }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
     <label for="priorite">Priorité</label>
     <select id="priorite" name="priorite">
       {% for p in priorites %}
-      <option value="{{ p }}">{{ p }}</option>
+      <option value="{{ p }}" {{ 'selected' if p == 'Moyenne' }}>{{ p }}</option>
       {% endfor %}
     </select>
-    <p><button type="submit">Créer</button></p>
+
+    <div class="actions" style="margin-top:22px">
+      <button type="submit" class="btn">Créer la déclaration</button>
+      <a href="{{ url_for('main.dashboard') }}" class="btn secondary">Annuler</a>
+    </div>
   </form>
 </div>
 {% endblock %}

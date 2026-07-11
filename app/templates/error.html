@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ code }} · GestInc</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="auth-wrap">
+  <div class="auth-card" style="text-align:center">
+    <div class="auth-brand"><span class="logo">◆</span></div>
+    <h1 style="font-size:2.4rem;margin:16px 0 0">{{ code }}</h1>
+    <p class="lead">{{ message }}</p>
+    <a href="{{ url_for('main.dashboard') }}" class="btn block">Retour au tableau de bord</a>
+  </div>
+</div>
+</body>
+</html>

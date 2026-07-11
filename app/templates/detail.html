@@ -1,62 +1,84 @@
 {% extends "base.html" %}
 {% block title %}Déclaration #{{ declaration.id }}{% endblock %}
+{% block subheading %}Détail de la déclaration #{{ declaration.id }}{% endblock %}
 {% block content %}
+{% set closed = declaration.statut in ['Résolu', 'Rejeté', 'Clôturé'] %}
+
 <div class="card">
-  <h2>{{ declaration.titre }} <span class="badge">{{ declaration.statut }}</span></h2>
-  <p>{{ declaration.description }}</p>
-  <p>
-    <strong>Priorité :</strong> {{ declaration.priorite }} |
-    <strong>Catégorie :</strong> {{ declaration.categorie.nom }} ({{ declaration.categorie.type_plateforme }}) |
-    <strong>Emplacement :</strong> {{ declaration.emplacement.site.nom }} - {{ declaration.emplacement.zone }}
-  </p>
-  <p>
-    <strong>Créée le :</strong> {{ declaration.date_creation.strftime('%Y-%m-%d %H:%M') }}
+  <div class="detail-head">
+    <div>
+      <h2>{{ declaration.titre }}</h2>
+      <span class="badge {{ statut_class(declaration.statut) }}">{{ declaration.statut }}</span>
+      <span class="pill {{ priorite_class(declaration.priorite) }}">Priorité {{ declaration.priorite }}</span>
+    </div>
+    <a href="{{ url_for('main.dashboard') }}" class="btn secondary">← Retour</a>
+  </div>
+
+  {% if declaration.description %}
+  <div class="desc">{{ declaration.description }}</div>
+  {% endif %}
+
+  <div class="meta-grid">
+    <div><div class="m-lbl">Catégorie</div><div class="m-val">{{ declaration.categorie.nom }} ({{ declaration.categorie.type_plateforme }})</div></div>
+    <div><div class="m-lbl">Emplacement</div><div class="m-val">{{ declaration.emplacement.site.nom }} · {{ declaration.emplacement.zone }}</div></div>
+    <div><div class="m-lbl">Déclarant</div><div class="m-val">{{ declaration.declarant.prenom }} {{ declaration.declarant.nom }}</div></div>
+    <div><div class="m-lbl">Technicien</div><div class="m-val">{% if declaration.technicien %}{{ declaration.technicien.prenom }} {{ declaration.technicien.nom }}{% else %}—{% endif %}</div></div>
+    <div><div class="m-lbl">Créée le</div><div class="m-val">{{ declaration.date_creation.strftime('%d/%m/%Y %H:%M') }}</div></div>
     {% if declaration.date_resolution %}
-      | <strong>Résolue le :</strong> {{ declaration.date_resolution.strftime('%Y-%m-%d %H:%M') }}
+    <div><div class="m-lbl">Résolue le</div><div class="m-val">{{ declaration.date_resolution.strftime('%d/%m/%Y %H:%M') }}</div></div>
     {% endif %}
-  </p>
+  </div>
 
   {% if g.user.is_technicien or g.user.is_admin %}
+    {% if not closed %}
+    <hr class="divider">
     {% if declaration.statut == 'En attente' %}
-    <form method="post" action="{{ url_for('main.prendre', declaration_id=declaration.id) }}">
-      <button type="submit">Prendre en charge</button>
+    <form method="post" action="{{ url_for('main.prendre', declaration_id=declaration.id) }}" style="margin-bottom:16px">
+      <button type="submit" class="btn">Prendre en charge</button>
     </form>
     {% endif %}
-    {% if declaration.statut not in ['Résolu', 'Rejeté', 'Clôturé'] %}
     <form method="post" action="{{ url_for('main.resoudre_view', declaration_id=declaration.id) }}">
-      <label for="commentaire_final">Commentaire final</label>
-      <textarea id="commentaire_final" name="commentaire_final" rows="2" required></textarea>
-      <p>
-        <button type="submit" name="action" value="resoudre">Résoudre</button>
-        <button type="submit" name="action" value="rejeter">Rejeter</button>
-      </p>
+      <label for="commentaire_final">Commentaire final (obligatoire pour clôturer)</label>
+      <textarea id="commentaire_final" name="commentaire_final" rows="2" placeholder="Expliquez la résolution ou le motif du rejet…" required></textarea>
+      <div class="actions">
+        <button type="submit" name="action" value="resoudre" class="btn success">Résoudre</button>
+        <button type="submit" name="action" value="rejeter" class="btn danger">Rejeter</button>
+      </div>
     </form>
     {% endif %}
   {% endif %}
 </div>
 
 <div class="card">
-  <h3>Commentaires</h3>
+  <div class="card-title"><h3>Commentaires</h3></div>
   {% for c in commentaires %}
-  <p>
-    <strong>{{ c.auteur.prenom }} {{ c.auteur.nom }}</strong>
-    {% if c.est_interne %}<span class="badge">interne</span>{% endif %}
-    <br>{{ c.message }}
-    <br><small>{{ c.date_publication.strftime('%Y-%m-%d %H:%M') }}</small>
-  </p>
+  <div class="comment {{ 'internal' if c.est_interne }}">
+    <span class="avatar">{{ initials(c.auteur) }}</span>
+    <div class="body">
+      <div class="head">
+        <strong>{{ c.auteur.prenom }} {{ c.auteur.nom }}</strong>
+        {% if c.est_interne %}<span class="tag">note interne</span>{% endif %}
+      </div>
+      <div class="msg">{{ c.message }}</div>
+      <div class="time">{{ c.date_publication.strftime('%d/%m/%Y %H:%M') }}</div>
+    </div>
+  </div>
   {% else %}
-  <p>Aucun commentaire.</p>
+  <div class="empty"><p>Aucun commentaire pour le moment.</p></div>
   {% endfor %}
 
-  {% if declaration.statut not in ['Résolu', 'Rejeté', 'Clôturé'] %}
+  {% if not closed %}
+  <hr class="divider">
   <form method="post" action="{{ url_for('main.comment', declaration_id=declaration.id) }}">
     <label for="message">Ajouter un commentaire</label>
-    <textarea id="message" name="message" rows="2" required></textarea>
+    <textarea id="message" name="message" rows="2" placeholder="Votre message…" required></textarea>
     {% if g.user.is_technicien or g.user.is_admin %}
-    <label><input type="checkbox" name="est_interne"> Note interne (invisible au déclarant)</label>
+    <label class="check"><input type="checkbox" name="est_interne"> Note interne (invisible au déclarant)</label>
     {% endif %}
-    <p><button type="submit">Envoyer</button></p>
+    <div class="actions" style="margin-top:12px"><button type="submit" class="btn">Envoyer</button></div>
   </form>
+  {% else %}
+  <p class="time" style="margin-top:12px">Cette déclaration est clôturée : l'historique reste consultable mais aucun nouveau message ne peut être ajouté.</p>
   {% endif %}
 </div>
 {% endblock %}

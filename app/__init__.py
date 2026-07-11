@@ -36,11 +36,38 @@ def create_app(config=None):
     from . import models  # noqa: F401  (register models with SQLAlchemy)
     from .routes_auth import bp as auth_bp
     from .routes_main import bp as main_bp
+    from .ui import register_ui_helpers
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(main_bp)
+    register_ui_helpers(app)
+    register_error_handlers(app)
 
     with app.app_context():
         db.create_all()
 
     return app
+
+
+def register_error_handlers(app):
+    from flask import g, render_template
+
+    _messages = {
+        403: "Vous n'avez pas l'autorisation d'accéder à cette ressource.",
+        404: "La page demandée est introuvable.",
+    }
+
+    def _handler(err):
+        code = getattr(err, "code", 500)
+        # Styled page only makes sense for logged-in users (needs dashboard link).
+        if getattr(g, "user", None) is None:
+            return err
+        return (
+            render_template(
+                "error.html", code=code, message=_messages.get(code, "Une erreur est survenue.")
+            ),
+            code,
+        )
+
+    for _code in (403, 404):
+        app.register_error_handler(_code, _handler)
