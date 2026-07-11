@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Gestion des Incidents{% endblock %} · SICAPSA</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+{% if g.user %}
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="logo"><img src="{{ url_for('static', filename='logo.jpg') }}" alt="SICAPSA"></span>
+      <span>SICAPSA<small>Incidents &amp; Travaux</small></span>
+    </div>
+    <nav class="nav">
+      <a href="{{ url_for('main.dashboard') }}" class="{{ 'active' if request.endpoint == 'main.dashboard' }}">
+        <span class="ic">▤</span><span>Tableau de bord</span>
+      </a>
+      <a href="{{ url_for('main.create') }}" class="{{ 'active' if request.endpoint == 'main.create' }}">
+        <span class="ic">＋</span><span>Nouvelle déclaration</span>
+      </a>
+      <a href="{{ url_for('main.alertes') }}" class="{{ 'active' if request.endpoint == 'main.alertes' }}">
+        <span class="ic">🔔</span><span>Alertes</span>
+        {% if nb_alertes_non_lues %}<span class="nav-badge">{{ nb_alertes_non_lues }}</span>{% endif %}
+      </a>
+    </nav>
+    <div class="sidebar-foot">
+      <div class="user-chip">
+        <span class="avatar">{{ initials(g.user) }}</span>
+        <span class="meta">
+          <strong>{{ g.user.prenom }} {{ g.user.nom }}</strong>
+          <span>{{ g.user.role.nom }}{% if g.user.specialite %} · {{ g.user.specialite }}{% endif %}</span>
+        </span>
+      </div>
+      <a href="{{ url_for('auth.logout') }}" class="logout">Déconnexion</a>
+    </div>
+  </aside>
+
+  <div class="content">
+    <div class="topbar">
+      <div>
+        <h1>{% block heading %}{{ self.title() }}{% endblock %}</h1>
+        <div class="sub">{% block subheading %}{% endblock %}</div>
+      </div>
+      <a href="{{ url_for('main.create') }}" class="btn"><span>＋</span> Déclarer un incident</a>
+    </div>
+    <div class="page">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="flashes">
+          {% for category, message in messages %}
+            <div class="flash {{ category }}">{{ message }}</div>
+          {% endfor %}
+        </div>
+        {% endif %}
+      {% endwith %}
+      {% block content %}{% endblock %}
+    </div>
+  </div>
+</div>
+{% else %}
+  {% block auth %}{% endblock %}
+{% endif %}
+</body>
+</html>

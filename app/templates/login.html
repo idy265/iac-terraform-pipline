@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Connexion{% endblock %}
+{% block auth %}
+<div class="auth-wrap">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <span class="logo"><img src="{{ url_for('static', filename='logo.jpg') }}" alt="SICAPSA"></span>
+    </div>
+    <h1>SICAPSA</h1>
+    <p class="lead">Plateforme de gestion des incidents &amp; demandes de travaux</p>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+      <div class="flashes">
+        {% for category, message in messages %}
+          <div class="flash {{ category }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    {% endwith %}
+
+    <form method="post">
+      <label for="email">Adresse e-mail</label>
+      <input type="email" id="email" name="email" placeholder="prenom@entreprise.com" required autofocus>
+      <label for="password">Mot de passe</label>
+      <input type="password" id="password" name="password" placeholder="••••••••" required>
+      <div style="height:18px"></div>
+      <button type="submit" class="btn block">Se connecter</button>
+    </form>
+
+    <div class="auth-hint">
+      <strong>Comptes de démonstration</strong> — mot de passe <code>password123</code><br>
+      jean@example.com (Demandeur) · alice@example.com (Technicien) · admin@example.com (Admin)
+    </div>
+  </div>
+</div>
+{% endblock %}

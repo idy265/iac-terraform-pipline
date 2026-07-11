@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Tableau de bord{% endblock %}
+{% block subheading %}Vue d'ensemble des déclarations{% endblock %}
+{% block content %}
+
+{% set nb_total = declarations | length %}
+{% set nb_wait = declarations | selectattr('statut', 'equalto', 'En attente') | list | length %}
+{% set nb_progress = declarations | selectattr('statut', 'equalto', 'En cours') | list | length %}
+{% set nb_done = declarations | selectattr('statut', 'equalto', 'Résolu') | list | length %}
+
+<div class="stats">
+  <div class="stat t-total"><div class="num">{{ nb_total }}</div><div class="lbl">Déclarations</div><div class="tick">▤</div></div>
+  <div class="stat t-wait"><div class="num">{{ nb_wait }}</div><div class="lbl">En attente</div><div class="tick">◷</div></div>
+  <div class="stat t-progress"><div class="num">{{ nb_progress }}</div><div class="lbl">En cours</div><div class="tick">⟳</div></div>
+  <div class="stat t-done"><div class="num">{{ nb_done }}</div><div class="lbl">Résolues</div><div class="tick">✓</div></div>
+</div>
+
+<div class="card">
+  <div class="card-title"><h2>Déclarations</h2></div>
+  {% if declarations %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>#</th><th>Titre</th><th>Statut</th><th>Priorité</th><th>Catégorie</th><th>Emplacement</th></tr>
+      </thead>
+      <tbody>
+        {% for d in declarations %}
+        <tr>
+          <td><span class="tid">#{{ d.id }}</span></td>
+          <td><a class="title-link" href="{{ url_for('main.detail', declaration_id=d.id) }}">{{ d.titre }}</a></td>
+          <td><span class="badge {{ statut_class(d.statut) }}">{{ d.statut }}</span></td>
+          <td><span class="pill {{ priorite_class(d.priorite) }}">{{ d.priorite }}</span></td>
+          <td>{{ d.categorie.nom }} <span class="tag">{{ d.categorie.type_plateforme }}</span></td>
+          <td>{{ d.emplacement.site.nom }} · {{ d.emplacement.zone }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty">
+    <div class="big">▤</div>
+    <p>Aucune déclaration à afficher.</p>
+    <a href="{{ url_for('main.create') }}" class="btn">Créer une déclaration</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

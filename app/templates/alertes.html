@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Alertes{% endblock %}
+{% block subheading %}Notifications sur vos déclarations{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="card-title" style="display:flex;justify-content:space-between;align-items:center">
+    <h2>Alertes</h2>
+    {% if alertes %}
+    <form method="post" action="{{ url_for('main.alertes_tout_lire') }}">
+      <button type="submit" class="btn secondary">Tout marquer comme lu</button>
+    </form>
+    {% endif %}
+  </div>
+
+  {% if alertes %}
+  <ul class="alert-list">
+    {% for a in alertes %}
+    <li class="alert-item {{ 'unread' if not a.lu }}">
+      <a href="{{ url_for('main.alerte_ouvrir', alerte_id=a.id) }}">
+        <span class="dot"></span>
+        <span class="body">
+          <span class="msg">{{ a.message }}</span>
+          <span class="time">#{{ a.declaration_id }} · {{ a.date_creation.strftime('%d/%m/%Y %H:%M') }}</span>
+        </span>
+        {% if not a.lu %}<span class="tag">Nouveau</span>{% endif %}
+      </a>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <div class="empty">
+    <div class="big">🔔</div>
+    <p>Aucune alerte pour le moment.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
